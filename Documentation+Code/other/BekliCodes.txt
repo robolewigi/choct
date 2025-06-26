@@ -1,0 +1,605 @@
+Index--------------------------------
+Python,window,timer,checkKey
+      Cpp,initialize,uiSamples,windowSize,events,controller,screenChange, timer, simulateClick, main
+import---------------------------------
+import pygame 
+Python------------------------------
+Virtual Environment
+(create folder not included)
+linux (my location):
+. ~/app/venv/venv/bin/activate 
+windows:
+cd (location)
+python -m venv venv
+myenv\Scripts\activate
+remove:
+deactivate
+
+
+Window------------------------------
+screen = pygame.display.set_mode((300, 300)) 
+pygame.display.set_caption('Window') 
+screen.fill((234, 212, 252))  
+pygame.display.flip() 
+running = True
+while running: 
+        for event in pygame.event.get(): 
+                if event.type == pygame.QUIT: 
+                        running = False
+
+
+Timer-------------------------------------
+pygame.init()
+timer=[0,1000]
+
+
+while True:
+ if pygame.time.get_ticks() - timer[0] >= timer[1]:
+  timer[0] = pygame.time.get_ticks()
+  print('time finished')
+CheckKey------------------------------
+pygame.init()
+pygame.joystick.init()
+joysticks = []
+for i in range(pygame.joystick.get_count()):
+ joystick = pygame.joystick.Joystick(i)
+ joystick.init()
+ joysticks.append(joystick)
+ print(f"Initialized joystick: {joystick.get_name()}")
+ screen = pygame.display.set_mode((400, 300))
+ pygame.display.set_caption("Press a Button")
+ running = True
+ while running:
+  for event in pygame.event.get():
+  if event.type == pygame.QUIT:
+   running = False
+  if event.type == pygame.JOYBUTTONDOWN:
+   print(f"Joystick {event.joy} button pressed: {event.button}")
+  if event.type == pygame.JOYAXISMOTION:
+   print(f"Joystick {event.joy} axis {event.axis} moved to {event.value}")
+  if event.type == pygame.JOYHATMOTION:
+   print(f"Joystick {event.joy} hat {event.hat} moved to {event.value}")
+pygame.quit()
+
+cpp------------------------------
+imports------------------------------------------------------------
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL2_gfxPrimitives.h>
+#include <chrono>
+#include <string>
+#include <iostream> 
+#include <vector>
+#include <cmath>
+#include <algorithm>
+initialize---------------------------
+SDL_Window *window1=nullptr;
+SDL_Renderer *render1=nullptr;
+TTF_Font *font1=nullptr;
+bool quit = false;
+SDL_Event event1;
+
+struct windowStruct{
+ int init(){
+  //--------------------------------
+  //SDL_SetHint (SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
+  textCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_IBEAM);
+  if (SDL_Init(SDL_INIT_VIDEO) != 0) {// | SDL_INIT_JOYSTICK)
+   printf("SDL_Init Error: %s\n", SDL_GetError());
+   return 1;
+   }
+  if (TTF_Init() == -1) {
+   printf("TTF_Init Error: %s\n", TTF_GetError());
+  SDL_Quit();
+  return 1;
+  }
+ window1 = SDL_CreateWindow("Hello SDL",SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 
+ 600, 300, SDL_WINDOW_RESIZABLE);
+ if (window1 == NULL) {
+  printf("SDL_CreateWindow Error: %s\n", SDL_GetError());
+  TTF_Quit();
+  SDL_Quit();
+  return 1;
+  }
+ render1 = SDL_CreateRenderer(window1, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+ if (render1 == NULL) {
+  SDL_DestroyWindow(window1);
+  printf("SDL_CreateRenderer Error: %s\n", SDL_GetError());
+ TTF_Quit();
+  SDL_Quit();
+  return 1;
+  }
+ font1 = TTF_OpenFont("OpenSans.ttf", 15);
+ if (font1 == NULL) { 
+  printf("TTF_OpenFont Error: %s\n", TTF_GetError());
+  SDL_DestroyRenderer(render1);
+  SDL_DestroyWindow(window1);
+  TTF_Quit();
+  SDL_Quit();
+  return 1; 
+  }
+ return 0;
+ }
+ void event(SDL_Event e){
+  switch (e.type) {
+   case SDL_WINDOWEVENT:
+    switch (e.window.event) {
+     case SDL_WINDOWEVENT_RESIZED:
+      width=e.window.data1;height=e.window.data2;
+      break;
+     }
+    break;
+   }
+  }
+ void render(){
+  }
+ void begin(){
+  }
+ void update(){
+  }
+ void close(){
+  //SDL_JoystickClose(joystick);
+  TTF_CloseFont(font1);
+  SDL_DestroyRenderer(render1);
+  SDL_DestroyWindow(window1);
+  TTF_Quit();
+  SDL_Quit();
+  }
+ };
+uiSamples------------------------------------------------------------
+//shape=begin,render button=begin,event,render textBox=begin,event,update,render
+int mouseX, mouseY;
+int width=600,height=300,oldWidth=width,oldHeight=height,buttonHover=-1;
+bool fontChange=true, resize=false;
+std::chrono::high_resolution_clock::time_point lastBlink;
+SDL_Cursor* textCursor=nullptr;
+TTF_Font* font =nullptr;
+float xScale=1.0,yScale=1.0;
+
+struct shape{
+ virtual ~shape() = default;
+ //1-textLater
+ int type,special=0;
+ Uint8 red,green,blue,alpha;         
+ int p1,p2,p3,p4,p5,p6,tree=0;  
+ std::string text;      
+ bool visible;           
+ 
+ void begin(int shapeType=0, Uint8 r=255, Uint8 g=0,Uint8 b=0,int x=300,int y=200,int w=100,int h=100,int x3=450,int y3=450,std::string text1="",bool visible1=true) {
+  type = shapeType;
+  red=r,green=g,blue=b,alpha=255;
+  p1=x,p2=y,p3=w,p4=h,p5=x3,p6=y3;
+  text=text1,visible=visible1;
+  }
+
+void textRender(SDL_Renderer* renderer,int x=0,int y=0){
+  if(!visible||tree==2&&alpha!=111){return;}
+  size_t start=0, end;
+  int textWidth, textHeight,amount=-1;
+  bool exit=false;
+
+  if(x==0&&y==0){
+   if(text!=""){
+    if(type==1){
+     x+=(p1+p3+p5)/3,y+=(p2+p4+p6)/3;
+     }else{
+     x=(p1+p3+p1)/2,y=(p2+p4+p2)/2;
+     }
+    TTF_SizeText(font1, text.c_str(), &textWidth, &textHeight);
+    x = x*xScale - textWidth / 2,y = y*yScale - textHeight / 2;
+    }
+   }else{x*=xScale;y*=yScale;}
+  while(true) {    
+   end = text.find('\n', start);
+   if(exit){break;}
+   if(end==std::string::npos) {exit=true;}
+   amount++;
+
+   std::string newText= text.substr(start, end - start);
+   start = end + 1;
+if (text.empty()) {return;}
+   SDL_Surface* surface = TTF_RenderText_Solid(font1, newText.c_str(), {255,255,255});
+
+   SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+   SDL_Rect dstRect = {x, static_cast<int>(y + amount * (17 * yScale)), surface->w, surface->h};
+   SDL_RenderCopy(renderer, texture, nullptr, &dstRect);
+   SDL_FreeSurface(surface);
+   SDL_DestroyTexture(texture);
+   }
+  }
+
+ //renderClear
+ void render(SDL_Renderer* renderer) {
+  if(!visible){return;}
+  if(alpha==0){textRender(renderer);return;}
+  SDL_SetRenderDrawColor(renderer, red, green, blue, alpha);
+  if (type == 0) { 
+   SDL_Rect rect={(int)(p1*xScale),(int)(p2*yScale),(int)(p3*xScale),(int)(p4*yScale)};
+   SDL_RenderFillRect(renderer, &rect);
+   } else if (type == 1) {
+    filledTrigonRGBA(renderer, (int)(p1*xScale),(int)(p2*yScale),(int)(p3*xScale),(int)(p4*yScale),(int)(p5*xScale),(int)(p6*yScale), red, green, blue, alpha);
+   } else if (type == 2) { 
+   for (int w = 0; w < (int)(p3*(xScale+yScale)/2) * 2; w++) {
+    for (int h = 0; h < (int)(p3*(xScale+yScale)/2) * 2; h++) {
+     int dx = (int)(p3*(xScale+yScale)/2) - w; 
+     int dy = (int)(p3*(xScale+yScale)/2) - h;
+     if ((dx * dx + dy * dy) <= ((int)(p3*(xScale+yScale)/2) * (int)(p3*(xScale+yScale)/2))) {
+      SDL_RenderDrawPoint(renderer, (int)(p1*xScale) + dx, (int)(p2*yScale) + dy);
+      }
+     }
+    }
+   }
+  if(special!=1){textRender(renderer);}
+  }
+ };
+
+struct button : public shape{
+ bool hovered=false;
+ bool enabled=true;
+ Uint8 oR,oG,oB;
+ void begin(int shapeType=0, Uint8 r=255, Uint8 g=0, Uint8 b=0, int x=300,int y=200,int w=100,int h=100,int x3=450,int y3=450,std::string text1="",bool visible1=true){
+ shape::begin (shapeType,r,g,b,x,y,w,h,x3,y3,text1,visible1);
+ oR=r;oG=g,oB=b;
+ shape::tree= 1;
+ }
+
+ //event:SDL_MOUSEMOTION
+ void eventFunc(SDL_Event e) { 
+  if(!visible){return;}
+  if(e.type==SDL_MOUSEMOTION || e.type==SDL_MOUSEBUTTONUP){
+ red=oR; green=oG,blue=oB,hovered=false;
+ Uint32 mouseState = SDL_GetMouseState(&mouseX, &mouseY);
+   bool access=false; 
+   switch(type){
+    case 0:
+     if (squareCollision(p1,p2,p3,p4)){access=true;}
+     break;
+    case 1:
+     if (triangleCollision(p1,p2,p3,p4,p5,p6)){access=true;}
+    break;
+    case 2:
+     if (circleCollision(p1,p2,p3)){access=true;}
+    break;
+    } 
+   if(access){
+    hovered=true;
+    if(enabled){
+      red=oR/2;green=oG/2;blue=oB/2;
+     }
+    if (mouseState & SDL_BUTTON(SDL_BUTTON_LEFT)) { 
+     if(enabled){
+      red=oR/3;green=oG/3;blue=oB/3;
+      }
+     }
+    }
+   }
+  }
+ };
+
+struct textBox : public button {           
+ Uint8 tR=255,tG=255,tB=255;     
+ int scrollOffset;        
+ bool cursorVisible=true,active=false;  
+ int blinkInterval=500;
+ SDL_Rect cursor;
+     
+ //init
+ void begin(int shapeType=0, Uint8 r=111, Uint8 g=111,Uint8 b=111, int x=300,int y=200,int w=100,int h=44,int x3=450,int y3=450,std::string text1="",bool visible1=true) {
+  button::begin (shapeType,r,g,b,x,y,w,h,x3,y3,text1,visible1);
+  enabled=false;
+  scrollOffset = 0;
+  cursor = {p1 + 5, p2 + 5, 2, p4 - 10};
+  lastBlink = std::chrono::high_resolution_clock::now();
+  shape::tree=2;    
+  cursorLocation();
+  }
+
+ //event:SDL_TEXTINPUT
+ void handleTextInput(const char* inputText,bool pass=false) {
+  if (!active){return;}
+  shape::text += inputText;
+  cursorLocation();
+  }
+ void cursorLocation(){
+  int textWidth, textHeight;
+  TTF_SizeText(font1, shape::text.c_str(), &textWidth, &textHeight);
+  if (textWidth > (int)(p3*xScale) - 10) {
+   scrollOffset = textWidth - ((int)(p3*xScale) - 10);
+   }
+  cursor.x = (int)(p1*xScale) + 5 + textWidth - scrollOffset;
+  cursor.y= (int)(p2*yScale) + 5;
+  }
+
+ void handleBackspace() {
+  if (!active || shape::text.empty()) return;
+  shape::text.pop_back();
+  int textWidth, textHeight;
+  TTF_SizeText(font1, shape::text.c_str(), &textWidth, &textHeight);
+  if (textWidth <= (int)(p3*xScale) - 10) {
+   scrollOffset = 0;
+   } else {
+   scrollOffset = textWidth - ((int)(p3*xScale) - 10);
+   }
+  cursor.x = (int)(p1*xScale) + 5 + textWidth - scrollOffset;
+  cursor.y= (int)(p2*yScale) + 5;
+  }
+
+ void eventFunc(SDL_Event e) {
+  if(!visible){return;}
+  button::eventFunc(e);
+  if(e.type==SDL_MOUSEMOTION || e.type==SDL_MOUSEBUTTONUP){
+   if (hovered) {
+    SDL_SetCursor(textCursor);
+    } 
+   else {SDL_SetCursor(SDL_GetDefaultCursor()); }
+   if(e.type==SDL_MOUSEBUTTONUP){
+    if (hovered) {
+     active = true;
+     }else{
+     active= false;
+     }
+    }
+   }
+  if (e.type == SDL_TEXTINPUT) {
+   handleTextInput(e.text.text);
+   }
+  if (e.type == SDL_KEYDOWN) {
+   if (e.key.keysym.sym == SDLK_BACKSPACE) {
+    handleBackspace();
+    }
+   }
+  }
+ 
+
+ //update
+ void update() {
+  auto now = std::chrono::high_resolution_clock::now();
+  if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastBlink).count() > blinkInterval) {
+   cursorVisible = !cursorVisible;
+   lastBlink = now;
+   }
+  }
+
+ //renderClear
+ void render(SDL_Renderer* renderer) {
+  if(!visible){return;}
+  shape::render(renderer); 
+  SDL_Rect clipRect = {p1, p2, p3, p4};
+  SDL_RenderSetClipRect(renderer, &clipRect);
+  if (!shape::text.empty()) {
+   SDL_Color textColor = {tR, tG, tB, 255}; 
+   SDL_Surface* textSurface = TTF_RenderText_Blended(font1, shape::text.c_str(), textColor);
+   SDL_Texture* textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
+   SDL_Rect textRect = {shape::p1 + 5 - scrollOffset, shape::p2 + 5, textSurface->w, textSurface->h};
+   SDL_RenderCopy(renderer, textTexture, NULL, &textRect);
+   SDL_FreeSurface(textSurface);
+   SDL_DestroyTexture(textTexture);
+   }
+  if (active && cursorVisible) {
+   SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+   SDL_RenderFillRect(renderer, &cursor);
+   }
+  SDL_RenderSetClipRect(renderer, NULL); // Reset clip rect
+  update();
+  }
+ };
+windowSize--------------------------------
+int screenWidth = 600;
+int screenHeight = 300;
+
+//event
+if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+ screenWidth = event.window.data1; // New width
+ screenHeight = event.window.data2; // New height
+events-------------------------------------------
+switch (event.type) {
+    case SDL_QUIT:
+        std::cout << "Quit event triggered!" << std::endl;
+        break;
+
+    case SDL_KEYDOWN:
+        std::cout << "Key pressed: " << SDL_GetKeyName(event.key.keysym.sym) << std::endl;
+        break;
+
+    case SDL_KEYUP:
+        std::cout << "Key released: " << SDL_GetKeyName(event.key.keysym.sym) << std::endl;
+        break;
+
+    case SDL_MOUSEMOTION:
+        std::cout << "Mouse moved to (" << event.motion.x << ", " << event.motion.y << ")" << std::endl;
+        break;
+
+    case SDL_MOUSEBUTTONDOWN:
+        std::cout << "Mouse button pressed at (" << event.button.x << ", " << event.button.y << ")" << std::endl;
+        break;
+
+    case SDL_MOUSEBUTTONUP:
+        std::cout << "Mouse button released at (" << event.button.x << ", " << event.button.y << ")" << std::endl;
+        break;
+
+    case SDL_MOUSEWHEEL:
+        std::cout << "Mouse wheel scrolled. X: " << event.wheel.x << ", Y: " << event.wheel.y << std::endl;
+        break;
+
+    case SDL_WINDOWEVENT:
+        switch (event.window.event) {
+            case SDL_WINDOWEVENT_RESIZED:
+                std::cout << "Window resized to " << event.window.data1 << "x" << event.window.data2 << std::endl;
+                break;
+            case SDL_WINDOWEVENT_CLOSE:
+                std::cout << "Window close requested!" << std::endl;
+                break;
+            default:
+                std::cout << "Other window event!" << std::endl;
+                break;
+        }
+        break;
+case SDL_CONTROLLERAXISMOTION:
+    std::cout << "Controller axis moved! Axis: " << event.caxis.axis 
+              << ", Value: " << event.caxis.value << std::endl;
+    break;
+
+case SDL_FINGERDOWN:
+    std::cout << "Finger down at (" << event.tfinger.x << ", " << event.tfinger.y << ")" << std::endl;
+    break;
+
+case SDL_DROPFILE:
+    std::cout << "File dropped: " << event.drop.file << std::endl;
+    SDL_free(event.drop.file); // Clean up dynamically allocated memory
+    break;
+
+    // Add more cases for other event types as needed
+    default:
+        std::cout << "Unhandled event type: " << event.type << std::endl;
+        break;
+}
+controller----------------------------------------------------
+#include <SDL.h>
+#include <iostream>
+
+int main(int argc, char* argv[]) {
+    // Initialize SDL's video and joystick subsystems
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
+        std::cerr << "Failed to initialize SDL: " << SDL_GetError() << std::endl;
+        return -1;
+    }
+
+    // Check for joysticks
+    if (SDL_NumJoysticks() < 1) {
+        std::cerr << "No game controllers connected!" << std::endl;
+    } else {
+        SDL_Joystick* joystick = SDL_JoystickOpen(0); // Open the first joystick
+        if (joystick) {
+            std::cout << "Joystick connected: " << SDL_JoystickName(joystick) << std::endl;
+        } else {
+            std::cerr << "Failed to open joystick: " << SDL_GetError() << std::endl;
+        }
+    }
+
+    // Main event loop
+    SDL_Event event;
+    bool running = true;
+    while (running) {
+        while (SDL_PollEvent(&event)) {
+            switch (event.type) {
+                case SDL_QUIT:
+                    running = false;
+                    break;
+                case SDL_JOYBUTTONDOWN:
+                    std::cout << "Button " << static_cast<int>(event.jbutton.button) << " pressed." << std::endl;
+                    break;
+                case SDL_JOYBUTTONUP:
+                    std::cout << "Button " << static_cast<int>(event.jbutton.button) << " released." << std::endl;
+                    break;
+                case SDL_JOYAXISMOTION:
+                    std::cout << "Axis " << static_cast<int>(event.jaxis.axis) << " moved to " << static_cast<int>(event.jaxis.value) << std::endl;
+                    break;
+                case SDL_JOYHATMOTION:
+                    std::cout << "D-Pad moved: " << static_cast<int>(event.jhat.value) << std::endl;
+                    break;
+            }
+        }
+    }
+
+    // Cleanup
+    SDL_Quit();
+    return 0;
+}
+screenChange--------------------------------
+bool resize=true; float= xScale=1.0f ,yScale=1.0f;
+void screenChange(){
+ if(resize){
+  xScale=static_cast<float>(width)/oldWidth;
+  yScale=static_cast<float>(height)/oldHeight;
+  font1 = TTF_OpenFont("OpenSans.ttf", (width+height)/64); 
+  resize=false;
+  }
+ }
+timer-------------------------------
+long ticks;
+std::vector<long> timers(4);
+auto startTime = std::chrono::high_resolution_clock::now();
+
+void update(){
+  auto currentTime = std::chrono::high_resolution_clock::now();
+ ticks = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startTime).count();
+ if(ticks>timers[0]){
+
+  }
+ }
+simulateClick----------------------------
+#ifdef __linux__
+ #include <X11/Xlib.h>
+ #include <X11/extensions/XTest.h>
+ void simulateMouseClick(unsigned int button,bool press=true) {
+  Display *display = XOpenDisplay(NULL);
+  if(press){
+    XTestFakeButtonEvent(display, button, True, 0);
+   }else{
+    XTestFakeButtonEvent(display, button, False, 0);
+   }
+    XFlush(display);
+  } 
+ void raiseWindow(){
+  
+  }
+#elif _WIN32
+ #include <Windows.h>
+ void simulateMouseClick(int button, bool press = true) {
+  INPUT input = { 0 }; // Create an INPUT structure to hold event data
+  input.type = INPUT_MOUSE; // We're simulating a mouse event
+  if (button == 1 ) {
+   input.mi.dwFlags = press ? MOUSEEVENTF_LEFTDOWN : MOUSEEVENTF_LEFTUP;
+   } else if (button == 3){
+   input.mi.dwFlags = press ? MOUSEEVENTF_RIGHTDOWN : MOUSEEVENTF_RIGHTUP;
+   } else if (button == 2) {
+   input.mi.dwFlags = press ? MOUSEEVENTF_MIDDLEDOWN : MOUSEEVENTF_MIDDLEUP;
+   }
+  SendInput(1, &input, sizeof(INPUT));
+  }
+ #endif
+main------------------------
+bool squareCollision(int x1,int y1,int w1,int h1){
+ x1= (int)(x1*xScale),y1=(int)(y1*yScale),w1=(int)(w1*xScale),h1=(int)(h1*yScale);
+ return(mouseX >= x1 && mouseX <= x1 + w1 &&mouseY >= y1 && mouseY <= y1+h1);
+ }
+bool triangleCollision(int x1, int y1, int x2, int y2, int x3, int y3) {
+ x1= (int)(x1*xScale),y1=(int)(y1*yScale),x2=(int)(x2*xScale),y2=(int)(y2*yScale),x3=(int)(x3*xScale),y3=(int)(y3*yScale);
+ float area = abs(x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0;
+ float A1 = abs(mouseX * (y2 - y3) + x2 * (y3 - mouseY) + x3 * (mouseY - y2)) / 2.0;
+ float A2 = abs(mouseX * (y3 - y1) + x3 * (y1 - mouseY) + x1 * (mouseY - y3)) / 2.0;
+ float A3 = abs(mouseX * (y1 - y2) + x1 * (y2 - mouseY) + x2 * (mouseY - y1)) / 2.0;
+ return (area == A1 + A2 + A3);
+ }
+bool circleCollision(int centerX, int centerY, int radius) {
+ centerX= (int)(centerX*yScale),centerY=(int)(centerY*xScale),radius=(int)(radius*(yScale+xScale)/2);
+ int distSquared = (mouseX - centerX) * (mouseX - centerX) + (mouseY - centerY) * (mouseY - centerY);
+ return distSquared <= radius * radius;
+ }
+void screenChange(){
+ xScale=static_cast<float>(width)/oldWidth;
+ yScale=static_cast<float>(height)/oldHeight;
+ }
+
+windowStruct windowStruct1;
+
+int main(int argc, char* argv[]) {
+ windowStruct1.init();
+ while (!quit) {
+  windowStruct1.update();
+  while (SDL_PollEvent(&event1) != 0) {
+   if (event1.type == SDL_QUIT) {
+    quit = true;
+    }else{
+    windowStruct1.event(event1);
+    }
+   SDL_SetRenderDrawColor(render1, 111, 111, 111, 255);
+   SDL_RenderClear(render1);
+   windowStruct1.render();
+   SDL_RenderPresent(render1);
+   }
+  }
+ windowStruct1.close();
+ return 0;
+ }
+------------------------------------------------------

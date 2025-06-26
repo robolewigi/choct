@@ -1,0 +1,280 @@
+find- RunCommand Safety Fonts Todo
+%RunCommand------------------------
+file name="main" bat/sh="run"
+Python:
+windows
+@echo off
+cd /d "%~dp0" 
+:try1
+python3 main.py
+if %errorlevel% neq 0 goto try2
+goto end
+:try2
+python main.py
+:end
+pause
+
+linux (gnome-terminal with virtual environment)
+#!/bin/bash
+PYTHON_SCRIPT="main.py"
+VENV_PATH="$HOME/app/my_env/bin/activate"
+
+if [ -f "$PYTHON_SCRIPT" ]; then
+    gnome-terminal -- bash -c "source $VENV_PATH && python3 $PYTHON_SCRIPT; exec bash"
+else
+    gnome-terminal -- bash -c "echo 'Error: $PYTHON_SCRIPT not found in the current directory!'; exec bash"
+fi
+
+Cpp sdl:
+Linux:
+#!/bin/bash
+g++ -o main main.cpp -I/usr/include/SDL2 -lSDL2 -lSDL2_gfx -lSDL2_ttf -lX11 -lXtst
+
+if [ $? -eq 0 ]; then
+    x-terminal-emulator -e bash -c "stdbuf -o0 ./main; exec bash"
+else
+    x-terminal-emulator -e bash -c "echo Compilation failed.; echo Showing errors below:;
+    echo; g++ -o main main.cpp -I/usr/include/SDL2 -lSDL2 -lSDL2_gfx -lSDL2_ttf -lX11 -lXtst 2>&1; exec bash"
+fi
+
+
+Safety-----------------------
+Compile:
+pyinstaller --i=Icon.ico --noconsole Choct.py
+(debug):
+pyinstaller --i=Icon.ico Choct.py
+
+LinuxCompile:
+pyinstaller --icon=Icon.ico --hidden-import=tkinter choct.py
+
+in def runFunc:
+to change 
+to run-subprocess.Popen(["python", temp_file_path] if temp_file_path else ["cmd", "/c", fileLocation])
+
+def save:
+data={variables}
+with open("variables.json", "w") as file:
+ json.dump(data, file, indent=4)
+
+Fonts---------------------------------------
+Found these using python tkinter
+available_fonts = font.families()
+for font_name in available_fonts: 
+ print(font_name)
+
+System
+Terminal
+Fixedsys
+Modern
+Roman
+Script
+Courier
+MS Serif
+MS Sans Serif
+Small Fonts
+ProFontWindows
+RMG2003
+RMG2000
+RM2003
+RM2000
+8514oem
+Marlett
+Arial
+Arabic Transparent
+Arial Baltic
+Arial CE
+Arial CYR
+Arial Greek
+Arial TUR
+Arial Black
+Bahnschrift Light
+Bahnschrift SemiLight
+Bahnschrift
+Bahnschrift SemiBold
+Bahnschrift Light SemiCondensed
+Bahnschrift SemiLight SemiConde
+Bahnschrift SemiCondensed
+Bahnschrift SemiBold SemiConden
+Bahnschrift Light Condensed
+Bahnschrift SemiLight Condensed
+Bahnschrift Condensed
+Bahnschrift SemiBold Condensed
+Calibri
+Calibri Light
+Cambria
+Cambria Math
+Candara
+Candara Light
+Comic Sans MS
+Consolas
+Constantia
+Corbel
+Corbel Light
+Courier New
+Courier New Baltic
+Courier New CE
+Courier New CYR
+Courier New Greek
+Courier New TUR
+Ebrima
+Franklin Gothic Medium
+Gabriola
+Gadugi
+Georgia
+HoloLens MDL2 Assets
+Impact
+Ink Free
+Javanese Text
+Leelawadee UI
+Leelawadee UI Semilight
+Lucida Console
+Lucida Sans Unicode
+Malgun Gothic
+@Malgun Gothic
+Malgun Gothic Semilight
+@Malgun Gothic Semilight
+Microsoft Himalaya
+Microsoft JhengHei
+@Microsoft JhengHei
+Microsoft JhengHei UI
+@Microsoft JhengHei UI
+Microsoft JhengHei Light
+@Microsoft JhengHei Light
+Microsoft JhengHei UI Light
+@Microsoft JhengHei UI Light
+Microsoft New Tai Lue
+Microsoft PhagsPa
+Microsoft Sans Serif
+Microsoft Tai Le
+Microsoft YaHei
+@Microsoft YaHei
+Microsoft YaHei UI
+@Microsoft YaHei UI
+Microsoft YaHei Light
+@Microsoft YaHei Light
+Microsoft YaHei UI Light
+@Microsoft YaHei UI Light
+Microsoft Yi Baiti
+MingLiU-ExtB
+@MingLiU-ExtB
+PMingLiU-ExtB
+@PMingLiU-ExtB
+MingLiU_HKSCS-ExtB
+@MingLiU_HKSCS-ExtB
+Mongolian Baiti
+MS Gothic
+@MS Gothic
+MS UI Gothic
+@MS UI Gothic
+MS PGothic
+@MS PGothic
+MV Boli
+Myanmar Text
+Nirmala UI
+Nirmala UI Semilight
+Palatino Linotype
+Sans Serif Collection
+Segoe Fluent Icons
+Segoe MDL2 Assets
+Segoe Print
+Segoe Script
+Segoe UI
+Segoe UI Black
+Segoe UI Emoji
+Segoe UI Historic
+Segoe UI Light
+Segoe UI Semibold
+Segoe UI Semilight
+Segoe UI Symbol
+Segoe UI Variable Small Light
+Segoe UI Variable Small Semilig
+Segoe UI Variable Small
+Segoe UI Variable Small Semibol
+Segoe UI Variable Text Light
+Segoe UI Variable Text Semiligh
+Segoe UI Variable Text
+Segoe UI Variable Text Semibold
+Segoe UI Variable Display Light
+Segoe UI Variable Display Semil
+Segoe UI Variable Display
+Segoe UI Variable Display Semib
+SimSun
+@SimSun
+NSimSun
+@NSimSun
+SimSun-ExtB
+@SimSun-ExtB
+Sitka Small
+Sitka Small Semibold
+Sitka Text
+Sitka Text Semibold
+Sitka Subheading
+Sitka Subheading Semibold
+Sitka Heading
+Sitka Heading Semibold
+Sitka Display
+Sitka Display Semibold
+Sitka Banner
+Sitka Banner Semibold
+Sylfaen
+Symbol
+Tahoma
+Times New Roman
+Times New Roman Baltic
+Times New Roman CE
+Times New Roman CYR
+Times New Roman Greek
+Times New Roman TUR
+Trebuchet MS
+Verdana
+Webdings
+Wingdings
+Yu Gothic
+@Yu Gothic
+Yu Gothic UI
+@Yu Gothic UI
+Yu Gothic UI Semibold
+@Yu Gothic UI Semibold
+Yu Gothic Light
+@Yu Gothic Light
+Yu Gothic UI Light
+@Yu Gothic UI Light
+Yu Gothic Medium
+@Yu Gothic Medium
+Yu Gothic UI Semilight
+@Yu Gothic UI Semilight
+Cascadia Code ExtraLight
+Cascadia Code Light
+Cascadia Code SemiLight
+Cascadia Code
+Cascadia Code SemiBold
+Cascadia Mono ExtraLight
+Cascadia Mono Light
+Cascadia Mono SemiLight
+Cascadia Mono
+Cascadia Mono SemiBold
+Batang
+@Batang
+BatangChe
+@BatangChe
+Gungsuh
+@Gungsuh
+GungsuhChe
+@GungsuhChe
+Gulim
+@Gulim
+GulimChe
+@GulimChe
+Dotum
+@Dotum
+DotumChe
+@DotumChe
+Source Code Pro
+SimSun-ExtG
+@SimSun-ExtG
+
+#todo####################
+for version 8
+-ctrl+B will replace the main tab not test tab
+-ctrl+B does not run
+-
