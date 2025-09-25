@@ -1,4 +1,4 @@
-find- RunCommand Safety Fonts Todo
+find- RunCommand Safety Fonts Todo fixes
 %RunCommand------------------------
 file name="main" bat/sh="run"
 Python:
@@ -36,6 +36,16 @@ else
     x-terminal-emulator -e bash -c "echo Compilation failed.; echo Showing errors below:;
     echo; g++ -o main main.cpp -I/usr/include/SDL2 -lSDL2 -lSDL2_gfx -lSDL2_ttf -lX11 -lXtst 2>&1; exec bash"
 fi
+
+rust(linux):
+#!/bin/bash
+current_dir=$(basename "$PWD")
+if [[ "$PWD" != */src ]]; then
+    cp main.rs src/
+else
+    cd ..
+fi
+gnome-terminal -- bash -c "source \$HOME/.cargo/env; cargo run; exec bash"
 
 
 Safety-----------------------
@@ -275,6 +285,6 @@ SimSun-ExtG
 
 #todo####################
 for version 8
--ctrl+B will replace the main tab not test tab
--ctrl+B does not run
--
+
+#fixes####################
+-filepaths usually break choct you can either delete variables.json (in _internal) or remove filepaths from variables.json

@@ -1,5 +1,5 @@
 Index--------------------------------
-Python,window,timer,checkKey
+Python,window,timer,checkKey,paint
       Cpp,initialize,uiSamples,windowSize,events,controller,screenChange, timer, simulateClick, main
 import---------------------------------
 import pygame 
@@ -16,17 +16,30 @@ remove:
 deactivate
 
 
-Window------------------------------
-screen = pygame.display.set_mode((300, 300)) 
-pygame.display.set_caption('Window') 
-screen.fill((234, 212, 252))  
-pygame.display.flip() 
-running = True
-while running: 
-        for event in pygame.event.get(): 
-                if event.type == pygame.QUIT: 
-                        running = False
+#!Window------------------------------
+import pygame
+pygame.init()
+class variables:
+ running=True
+ clock = pygame.time.Clock()
+ width,height=600,400
+ screen = pygame.display.set_mode((width, height)) 
+ fps=60
+ font = pygame.font.SysFont(None, 20)
+v=variables()
 
+pygame.display.set_caption('Window') 
+while v.running: 
+ for event in pygame.event.get(): 
+  if event.type == pygame.QUIT: 
+   v.running = False
+ v.screen.fill((234, 212, 252)) 
+ v.clock.tick(2222)
+ v.fps = round(v.clock.get_fps()) 
+
+ pygame.display.flip() 
+ fps_text = v.font.render(f"{v.fps}", True, (255, 255, 0))
+ v.screen.blit(fps_text, (10, 10))
 
 Timer-------------------------------------
 pygame.init()
@@ -60,7 +73,486 @@ for i in range(pygame.joystick.get_count()):
   if event.type == pygame.JOYHATMOTION:
    print(f"Joystick {event.joy} hat {event.hat} moved to {event.value}")
 pygame.quit()
+paint-----------------------------
+import pygame,math
+pygame.init()
+import threading,sys
+import json, os
 
+class variables():
+ width,height=300,300
+ mouX,mouY=pygame.mouse.get_pos()
+ click=False
+ screen1 = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+ buttons=[]
+ buttonColors=[]
+ buttonHover=-1
+ paints=[[111,111,122,133,133,111]]
+ paintColors=[[0,155,0]]
+ #paintState= 0-movePoint,1-addPoint,2-removePoint, 3-changeColor,4-copy/addShape,5-
+ paintState=-1
+ paintHover=-1
+ paintPoint=-1
+ colorSelect=[111,111,111]
+ paintCenters=[]
+ running=True
+ commandNames=["help","normal","move","add", "point","remove","color","save"]
+v=variables()
+
+def rotation(points, angle):
+ angleRad = math.radians(angle)
+ cosAngle = math.cos(angleRad)
+ sinAngle = math.sin(angleRad)
+ rotated = []
+ for i in range(0, len(points), 2):
+  x, y = points[i], points[i+1]
+  newX = x * cosAngle - y * sinAngle
+  newY = x * sinAngle + y * cosAngle
+  rotated.extend([newX, newY])
+ return rotated
+
+#!window
+pygame.display.set_caption('Window') 
+
+#!shape
+def shapeCollision(type, points1, points2):
+ if type == 0:
+  return (points2[0] <= points1[0] <= points2[0] + points2[2] and
+          points2[1] <= points1[1] <= points2[1] + points2[3])
+ if type== 1:
+  pts = [(points2[i], points2[i+1]) for i in range(0, len(points2), 2)]
+  inside = False
+  j = len(pts) - 1
+  for i in range(len(pts)):
+   xi, yi = pts[i]
+   xj, yj = pts[j]
+   if ((yi > y) != (yj > y)) and (points1[0] < (xj - xi) * (points1[1] - yi) / (yj - yi + 1e-9) + xi):
+    inside = not inside
+   j = i
+  return inside
+ if type == 2:
+  return math.dist((points1[0], points1[1]), (points2[0], points2[1])) <= points2[2]
+ return False
+
+def createShape(set,color,points,attach=v.screen1):
+ if set==0:
+  pygame.draw.rect(attach, color, tuple(points))
+ elif set==1:
+  polygonPoints = [(points[i], points[i+1]) for i in range(0, len(points), 2)]
+  pygame.draw.polygon(attach, color, polygonPoints)   
+ elif set==2:
+  pygame.draw.circle(attach, color, (points[0], points[1]), points[2])
+
+#!paint
+def paintAdd(points=[77,77,88,99,99,77],c=[155,0,0]):
+ v.paints.append(points)
+ v.paintColors.append(c)
+ saveCenter(len(v.paints)-1,True)
+
+#!commands
+def commandFunc():
+ print("help\n"+f"{v.commandNames}")
+ while True:
+  cmd = sys.stdin.readline().strip().lower()
+  for i in range(len(v.commandNames)):
+   if cmd == v.commandNames[i]:
+    if i==0:
+     print(f"{v.commandNames}")
+    elif i==1:
+     v.paintState=-1
+    elif i==2:
+     v.paintState=0
+    elif i==3:
+     v.paintState=4
+     if len(v.paints)==0:
+      paintAdd()
+    elif i==4:
+     v.paintState=1
+    elif i==5:
+     v.paintState=2
+    elif i==6:
+     v.paintState=3
+     print( f"current RGB:{v.colorSelect[0]},{v.colorSelect[1]},{v.colorSelect[2]}")
+     try:
+      colorInput = list(map(int, sys.stdin.readline().strip().split(",")))
+      if len(colorInput)==3:
+       v.colorSelect=colorInput
+       print(f'current RGB {v.colorSelect}')
+      else:
+       print("did not work.")
+     except:
+      print("did not work")
+    elif i==7:
+     saveLoad()
+threading.Thread(target=commandFunc, daemon=True).start()
+
+#!Save
+def saveCenter(index=-1,new=False):
+ if index!=-1:
+  xs,ys=v.paints[index][0::2],v.paints[index][1::2]
+  centerX,centerY = sum(xs) / len(xs),sum(ys) / len(ys)
+  if new: v.paintCenters.append([centerX,centerY])
+  else: v.paintCenters[index]=[centerX,centerY]
+ else:
+  v.paintCenters=[]
+ for i in range(len(v.paints)):
+  xs,ys=v.paints[i][0::2],v.paints[i][1::2]
+  centerX,centerY = sum(xs) / len(xs),sum(ys) / len(ys)
+  v.paintCenters.append([centerX,centerY])
+
+def saveLoad(load=False):
+ if not load:
+  allLoads= [v.width,v.height,v.paints,v.paintColors,v.colorSelect]
+  with open("save.json", "w") as f:
+   json.dump(allLoads, f)
+ else:
+  with open("save.json", "r") as f:
+   allLoads = json.load(f)
+   v.width,v.height,v.paints, v.paintColors,v.colorSelect= allLoads[0], allLoads[1],allLoads[2],allLoads[3], allLoads[4]
+   saveCenter()
+ print(v.width,v.height)
+
+#!main
+def clickFuncs():
+ if v.paintHover!=-1 and v.paintPoint!=-1:
+  if v.paintState==1:
+   v.paints[v.paintHover]. extend([v.width//2,v.height//2])
+  elif v.paintState==2:
+   if len(v.paints[v.paintHover])>6:
+    print(v.paintPoint,len(v.paints[v.paintHover]))
+    v.paints[v.paintHover].pop(v.paintPoint+1)
+    v.paints[v.paintHover].pop(v.paintPoint)
+   else:
+    del v.paints[v.paintHover]
+    del v.paintColors[v.paintHover]
+    del v.paintCenters[v.paintHover]
+  elif v.paintState==3:
+   v.paintColors[v.paintHover]=v.colorSelect
+  elif v.paintState==4:
+   newLoc=(v.paints[v.paintHover][0]+ v.paints[v.paintHover][1])//9
+   newPoints=[x-newLoc for x in v.paints[v.paintHover]]
+   paintAdd(newPoints, v.paintColors[v.paintHover])
+
+def overlayLists():
+ lists=[v.paints,v.buttons]
+ if not v.click:
+  v.paintPoint=-1
+  v.buttonHover,v.paintHover=-1,-1
+ for i in range(len(lists)):
+  if v.paintHover!=-1 and v.click:
+   break
+  for j in range(len(lists[i]) - 1, -1, -1):
+   if i== 0:
+    if v.paintState in [4,1,3]: num=1
+    else: num=len(lists[i][j])//2
+    for k in range(num):
+     if shapeCollision(2,[v.mouX,v.mouY],[v.paints[j][k*2],v.paints[j][k*2+1],5]):
+      v.paintHover=j
+      v.paintPoint=k*2
+      break
+    if shapeCollision(2,[v.mouX,v.mouY],[v.paintCenters[j][0],v.paintCenters[j][1],5]) and num!=1:
+     v.paintHover=j
+     break
+   elif i== 1:
+    if shapeCollision(0,[v.mouX,v.mouY],v.buttons[j]):
+     v.buttonHover=j
+     break
+
+def mouseMove():
+ v.mouX,v.mouY=pygame.mouse.get_pos()
+ if v.click and v.paintHover!=-1 and v.paintState==0:
+  if v.paintPoint!=-1:
+   v.paints[v.paintHover][v.paintPoint]= v.mouX
+   v.paints[v.paintHover][v.paintPoint+1]= v.mouY
+  else:
+   addLoc=[v.mouX-v.paintCenters[v.paintHover][0], v.mouY-v.paintCenters[v.paintHover][1]]
+   for i in range(len(v.paints[v.paintHover])):
+    v.paints[v.paintHover][i]+= addLoc[i%2]
+   v.paintCenters[v.paintHover]=[v.mouX,v.mouY]
+
+if os.path.exists("save.json"):
+ saveLoad(True)
+v.screen1 = pygame.display.set_mode((v.width, v.height), pygame.RESIZABLE)
+
+while v.running: 
+ v.screen1.fill((255,255,255))
+ overlayLists()
+ for event in pygame.event.get(): 
+  if event.type == pygame.QUIT: 
+   v.running = False
+  if event.type == pygame.VIDEORESIZE:
+   v.width, v.height = event.w, event.h
+  if event.type == pygame.MOUSEMOTION:
+   mouseMove()
+  if event.type == pygame.MOUSEBUTTONDOWN:
+   v.click=True
+   clickFuncs()
+  if event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+   v.click = False
+ for i in range(len(v.buttons)):
+  col=v.buttonColors[i]
+  if v.buttonHover==i:
+   if v.click:
+    col=[x//4 for x in col]
+   else:
+    col=[x//2 for x in col]
+  createShape(0,col,v.buttons[i])
+
+ for i in range(len(v.paints)):
+  createShape(1,v.paintColors[i], v.paints[i])
+
+ if v.paintState in [0,1,2,3,4]:
+  if len(v.paints)>0:
+   amount= len(v.paints[i])//2
+   if v.paintState in [4,1,3]: amount=1
+   for i in range(len(v.paints)):
+    for j in range(amount):
+     createShape( 2,[0,0,0],[v.paints[i][j*2],v.paints[i][j*2+1],5])
+    if v.paintState==0:
+     createShape( 2,[0,0,0],[v.paintCenters[i][0],v.paintCenters[i][1],5])
+
+ pygame.display.flip()
+//!3DLandscape
+import pygame
+import math
+import random
+import numpy as np
+pygame.init()
+
+class variables:
+ running=True
+ width,height=600,400
+ screen = pygame.display.set_mode((width, height))
+ clock = pygame.time.Clock()
+ debug=1000
+ debug2=-0.2
+ fps=60
+ timeScale=0
+ #(graphics)
+ landscape=[]
+ landI=[]
+ renderRadius = 1000 
+ viewScale=200
+ triColors=[]
+ #(camera)
+ camera=[1,222,1]
+ cameraHeight=-66
+ speed = 0.24
+ yRotation=0
+ velocityY=0
+ gravity=-0.01
+ jump=True
+ chunks=[]
+ onChunk=0
+ #(grid)
+ gridX, gridZ = 20, 20
+ size=6000
+v=variables()
+
+font = pygame.font.SysFont(None, 20)
+
+def createGrid(chunkX,chunkY):
+ v.chunks.append([chunkX,chunkY])
+ v.landscape.append([])
+ v.landI.append([])
+ for zi in range(v.gridZ): 
+  for xi in range(v.gridX):
+   x = xi - v.gridX//2
+   z = zi - v.gridZ//2
+   y = random.randint(0, v.size//25)
+   v.landscape[-1].append([x*v.size//v.gridX, y, z*v.size//v.gridZ])
+   if v.gridX-2>=xi and v.gridZ-2>=zi:
+    i0 = zi * (v.gridX) + xi
+    i1 = i0 + 1
+    i2 = i0 + (v.gridX)
+    i3 = i2 + 1
+    v.landI[-1].append([i0, i1, i2])
+    v.landI[-1].append([i1, i3, i2])
+ v.triColors.append([])
+ v.triColors[-1] = [[9, random.randint(50,155), 4] for _ in range(len(v.landI[-1]))]
+
+def lineIntersect(p1, p2, near=0.1):
+ x1, y1, z1 = p1
+ x2, y2, z2 = p2
+ if (z1 >= near and z2 >= near): return None
+ if (z1 < near and z2 < near): return None
+ t = (near - z1) / (z2 - z1)
+ ix = x1 + t * (x2 - x1)
+ iy = y1 + t * (y2 - y1)
+ iz = near  # forced onto near plane
+ return [ix, iy, iz]
+
+def clipTriangle(pts, near=0.1):
+ inside = []
+ outside = []
+ for p in pts:
+  if p[2] >= near:
+   inside.append(p)
+  else:
+   outside.append(p)
+
+ if len(inside) == 0: return []
+ if len(inside) == 3: return [pts]
+
+ new_tris = []
+ if len(inside) == 1 and len(outside) == 2:
+  p_in = inside[0]
+  p_out1, p_out2 = outside
+  i1 = lineIntersect(p_in, p_out1, near)
+  i2 = lineIntersect(p_in, p_out2, near)
+  new_tris.append([p_in, i1, i2])
+ elif len(inside) == 2 and len(outside) == 1:
+  p_in1, p_in2 = inside
+  p_out = outside[0]
+  i1 = lineIntersect(p_in1, p_out, near)
+  i2 = lineIntersect(p_in2, p_out, near)
+  new_tris.append([p_in1, p_in2, i1])
+  new_tris.append([p_in2, i2, i1])
+ return new_tris
+
+
+#!graphics
+def toCameraSpace(p):
+ x = p[0] - v.camera[0]
+ y = p[1] - v.camera[1]
+ z = p[2] - v.camera[2]
+ cos_r = math.cos(v.yRotation)
+ sin_r = math.sin(v.yRotation)
+ x, z = x * cos_r - z * sin_r, x * sin_r + z * cos_r
+ return [x, y, z]
+
+def projection(camP):
+ x,y,z=camP
+ inside=True
+ if z<=0.01: return None
+ px = (x / z) * v.viewScale + v.width / 2
+ py = (y / z) * v.viewScale + v.height / 2
+ inside=(0<=px<=v.width and 0<=py<=v.height and z>0.01)
+ return px, py, z, True
+ #if inside:
+ #else: return p[0],p[1],p[2],True
+
+def graphicsUpdate():
+ v.screen.fill((30,30,50))
+ newTriangles = []
+
+ for i, triI in enumerate(v.landI[v.onChunk]):
+  p0 = toCameraSpace(v.landscape[v.onChunk][triI[0]])
+  p1 = toCameraSpace(v.landscape[v.onChunk][triI[1]])
+  p2 = toCameraSpace(v.landscape[v.onChunk][triI[2]])
+
+  if p0[2] > 10 and p1[2] > 10 and p2[2] > 10:
+   proj0 = projection(p0)
+   proj1 = projection(p1)
+   proj2 = projection(p2)
+   if not proj0 or not proj1 or not proj2:continue
+   newTriangles.append([proj0, proj1, proj2, proj2[2], i])
+  else:
+   clipped = clipTriangle([p0, p1, p2], near=10)
+   if not clipped:
+    continue
+   for tri in clipped:
+    proj0 = projection(tri[0])
+    proj1 = projection(tri[1])
+    proj2 = projection(tri[2])
+    if not proj0 or not proj1 or not proj2: continue
+    newTriangles.append([proj0, proj1, proj2, proj2[2], i])
+ newTriangles.sort(key=lambda q: -q[3])
+ for tri in newTriangles:
+     pygame.draw.polygon(
+      v.screen,v.triColors[v.onChunk][tri[4]],[(tri[0][0], tri[0][1]), (tri[1][0], tri[1][1]), (tri[2][0], tri[2][1])])
+
+# Player/physics
+def groundHeight(px, pz):
+ stepX = v.size / v.gridX
+ stepZ = v.size / v.gridZ
+ gx = (px + v.size/2) / stepX
+ gz = (pz + v.size/2) / stepZ
+ x0 = int(math.floor(gx))
+ z0 = int(math.floor(gz))
+ x1 = x0 + 1
+ z1 = z0 + 1
+ if 0 <= x0 < v.gridX and 0 <= z0 < v.gridZ and 0 <= x1 < v.gridX and 0 <= z1 < v.gridZ:
+  i00 = z0 * v.gridX + x0
+  i10 = z0 * v.gridX + x1
+  i01 = z1 * v.gridX + x0
+  i11 = z1 * v.gridX + x1
+  h00 = v.landscape[v.onChunk][i00][1]
+  h10 = v.landscape[v.onChunk][i10][1]
+  h01 = v.landscape[v.onChunk][i01][1]
+  h11 = v.landscape[v.onChunk][i11][1]
+  tx = gx - x0
+  tz = gz - z0
+  h0 = h00 * (1 - tx) + h10 * tx
+  h1 = h01 * (1 - tx) + h11 * tx
+  return h0 * (1 - tz) + h1 * tz
+ return -9999
+
+
+def updatePlayer():
+ keys = pygame.key.get_pressed()
+ dx, dz = 0, 0
+
+ if keys[pygame.K_e]: v.yRotation += 0.04 * v.timeScale
+ elif keys[pygame.K_q]: v.yRotation -= 0.04 * v.timeScale
+ v.yRotation %= math.pi * 2
+ if keys[pygame.K_w]:
+  dx += math.sin(v.yRotation) * v.speed
+  dz += math.cos(v.yRotation) * v.speed
+ if keys[pygame.K_s]:
+  dx -= math.sin(v.yRotation) * v.speed
+  dz -= math.cos(v.yRotation) * v.speed
+ if keys[pygame.K_a]:
+  dx -= math.cos(v.yRotation) * v.speed
+  dz += math.sin(v.yRotation) * v.speed
+ if keys[pygame.K_d]:
+  dx += math.cos(v.yRotation) * v.speed
+  dz -= math.sin(v.yRotation) * v.speed
+
+ v.camera[0] += dx
+ v.camera[2] += dz
+ v.velocityY += v.gravity
+ v.camera[1] -= v.velocityY
+ groundY = groundHeight(v.camera[0], v.camera[2]) + v.cameraHeight
+ if groundY < 800:
+  if v.camera[1] >= groundY:
+   v.camera[1] = groundY
+   v.velocityY = 0
+   v.jump = True
+
+ if keys[pygame.K_SPACE] and v.jump:
+  v.velocityY = 1
+  v.jump = False
+
+# Main
+createGrid(0,0)
+while v.running:
+ v.clock.tick(2222)
+ v.fps = round(v.clock.get_fps())
+
+ for event in pygame.event.get():
+  if event.type == pygame.QUIT:
+   v.running = False
+ updatePlayer()
+
+ keys = pygame.key.get_pressed()
+
+ if keys[pygame.K_1]: v.debug -= 22 * v.timeScale
+ if keys[pygame.K_2]: v.debug += 22 * v.timeScale
+ if keys[pygame.K_4]: v.debug2 -= 0.01 * v.timeScale
+ if keys[pygame.K_5]: v.debug2 += 0.01 * v.timeScale
+ if keys[pygame.K_3]:
+  print(v.fps, v.yRotation)
+
+ graphicsUpdate()
+
+ fps_text = font.render(f"{v.fps}", True, (255, 255, 0))
+ v.screen.blit(fps_text, (10, 10))
+
+ v.timeScale = v.clock.get_time() / 10
+ pygame.display.flip()
+
+pygame.quit()
 cpp------------------------------
 imports------------------------------------------------------------
 #include <SDL2/SDL.h>
