@@ -393,22 +393,16 @@ def highlightFunc(event=None):
     selectedWord = v.currentWidget.get(start_idx, end_idx).strip()
     highlightWord(selectedWord)
 
-
 def highlightWord(word=None):
  if not word:
   return
- sel_ranges = v.currentWidget.tag_ranges("sel")
- start_idx = '1.0'
- while True:
-  start_idx = v.currentWidget.search(word, start_idx, stopindex=tk.END,nocase=1)
-  if not start_idx:  # If no more occurrences, break
-   break
-  end_idx = f"{start_idx}+{len(word)}c"  # Calculate end index of the word
-  v.currentWidget.tag_add("highlight", start_idx, end_idx)
-  start_idx = end_idx  # Move start index for the next search
-
-  if sel_ranges:
-   v.currentWidget.tag_remove("highlight", sel_ranges[0], sel_ranges[-1])
+ text = v.currentWidget
+ text.tag_remove("highlight", "1.0", tk.END)
+ content = text.get("1.0", tk.END)
+ for i, line in enumerate(content.splitlines(), start=1):
+  if word.lower() in line.lower() and i!=v.cursor[0]:
+   text.tag_add("highlight", f"{i}.0", f"{i}.0 lineend")
+ text.tag_config("highlight", background="yellow")
 
 def widgetFocus(x=0,y=0):
  if len(v.notebooks[x].tabs)>0:

@@ -1,4 +1,9 @@
-find- RunCommand Safety Fonts Todo fixes
+find- Todo RunCommand Safety Fonts 
+#todo####################
+for version 8
+-filepaths usually break choct you can either delete variables.json (in _internal) or remove filepaths from variables.json
+-when clicking on it i get Segmentation fault (core dumped) and quits choct
+
 %RunCommand------------------------
 file name="main" bat/sh="run"
 Python:
@@ -55,7 +60,7 @@ pyinstaller --i=Icon.ico --noconsole Choct.py
 pyinstaller --i=Icon.ico Choct.py
 
 LinuxCompile:
-pyinstaller --icon=Icon.ico --hidden-import=tkinter choct.py
+pyinstaller --icon=icon.ico --hidden-import=tkinter choct.py
 
 in def runFunc:
 to change 
@@ -283,8 +288,3 @@ Source Code Pro
 SimSun-ExtG
 @SimSun-ExtG
 
-#todo####################
-for version 8
-
-#fixes####################
--filepaths usually break choct you can either delete variables.json (in _internal) or remove filepaths from variables.json

@@ -6307,7 +6307,6 @@ def highlightFunc(event=None):
     selectedWord = v.currentWidget.get(start_idx, end_idx).strip()
     highlightWord(selectedWord)
 
-
 def highlightWord(word=None):
  if not word:
   return
@@ -6323,6 +6322,19 @@ def highlightWord(word=None):
 
   if sel_ranges:
    v.currentWidget.tag_remove("highlight", sel_ranges[0], sel_ranges[-1])
+
+'''oct2025
+def highlightWord(word=None):
+ if not word:
+  return
+ text = v.currentWidget
+ text.tag_remove("highlight", "1.0", tk.END)
+ content = text.get("1.0", tk.END)
+ for i, line in enumerate(content.splitlines(), start=1):
+  if word.lower() in line.lower() and i!=v.cursor[0]:
+   text.tag_add("highlight", f"{i}.0", f"{i}.0 lineend")
+ text.tag_config("highlight", background="yellow")
+'''
 
 def widgetFocus(x=0,y=0):
  if len(v.notebooks[x].tabs)>0:
