@@ -394,9 +394,9 @@ def highlightFunc(event=None):
     highlightWord(selectedWord)
 
 def highlightWord(word=None):
- if not word:
-  return
- text = v.currentWidget
+ if not word: return
+ if v.focused!=0: return
+ text = v.notebooks[0].tabs[v.notebooks[0].focused].winfo_children()[0]
  text.tag_remove("highlight", "1.0", tk.END)
  content = text.get("1.0", tk.END)
  for i, line in enumerate(content.splitlines(), start=1):

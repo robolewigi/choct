@@ -1,8 +1,7 @@
 find- Todo RunCommand Safety Fonts 
 #todo####################
 for version 8
--filepaths usually break choct you can either delete variables.json (in _internal) or remove filepaths from variables.json
--when clicking on it i get Segmentation fault (core dumped) and quits choct
+-highlight only v.notebooks[0]
 
 %RunCommand------------------------
 file name="main" bat/sh="run"
