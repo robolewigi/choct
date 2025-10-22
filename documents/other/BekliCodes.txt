@@ -1,5 +1,5 @@
 Index--------------------------------
-Python,window,timer,checkKey,paint
+Python,window,timer,checkKey,paint, startGame+ command,3dLandscape,
       Cpp,initialize,uiSamples,windowSize,events,controller,screenChange, timer, simulateClick, main
 import---------------------------------
 import pygame 
@@ -36,10 +36,10 @@ while v.running:
  v.screen.fill((234, 212, 252)) 
  v.clock.tick(2222)
  v.fps = round(v.clock.get_fps()) 
-
- pygame.display.flip() 
  fps_text = v.font.render(f"{v.fps}", True, (255, 255, 0))
  v.screen.blit(fps_text, (10, 10))
+
+ pygame.display.flip() 
 
 Timer-------------------------------------
 pygame.init()
@@ -94,7 +94,7 @@ class variables():
  paintHover=-1
  paintPoint=-1
  colorSelect=[111,111,111]
- paintCenters=[]
+ paintCenters=[[0,0]]
  running=True
  commandNames=["help","normal","move","add", "point","remove","color","save"]
 v=variables()
@@ -312,7 +312,108 @@ while v.running:
      createShape( 2,[0,0,0],[v.paintCenters[i][0],v.paintCenters[i][1],5])
 
  pygame.display.flip()
-//!3DLandscape
+
+#!startGame+ command
+import pygame,math
+pygame.init()
+import threading,sys
+import json, os
+
+class variables():
+ width,height=300,300
+ mouX,mouY=pygame.mouse.get_pos()
+ clicks=[False]*6
+ screen1 = pygame.display.set_mode((width, height), pygame.RESIZABLE)
+ running=True
+ commandNames=["help","save"]
+ shapes=[[1,[122,122,44],[11,66,33,22,66,66]]]
+v=variables()
+
+#!window
+pygame.display.set_caption('Window') 
+
+#!shape
+def shapeCollision(type, points1, points2):
+ if type == 0:
+  return (points2[0] <= points1[0] <= points2[0] + points2[2] and
+          points2[1] <= points1[1] <= points2[1] + points2[3])
+ if type== 1:
+  pts = [(points2[i], points2[i+1]) for i in range(0, len(points2), 2)]
+  inside = False
+  j = len(pts) - 1
+  for i in range(len(pts)):
+   xi, yi = pts[i]
+   xj, yj = pts[j]
+   if ((yi > points1[1]) != (yj > points1[1])) and (points1[0] < (xj - xi) * (points1[1] - yi) / (yj - yi + 1e-9) + xi):
+    inside = not inside
+   j = i
+  return inside
+ if type == 2:
+  return math.dist((points1[0], points1[1]), (points2[0], points2[1])) <= points2[2]
+ return False
+
+def drawShape(set,color,points,attach=v.screen1):
+ if set==0:
+  pygame.draw.rect(attach, tuple(color), tuple(points))
+ elif set==1:
+  polygonPoints = [(points[i], points[i+1]) for i in range(0, len(points), 2)]
+  pygame.draw.polygon(attach, tuple(color), polygonPoints)   
+ elif set==2:
+  pygame.draw.circle(attach, tuple(color), (points[0], points[1]), points[2])
+
+#!commands
+def commandFunc():
+ print("help\n"+f"{v.commandNames}")
+ while True:
+  cmd = sys.stdin.readline().strip().lower()
+  for i in range(len(v.commandNames)):
+   if cmd == v.commandNames[i]:
+    if i==0:
+     print(f"{v.commandNames}")
+    elif i==7:
+     saveLoad()
+threading.Thread(target=commandFunc, daemon=True).start()
+
+#!Save
+def saveLoad(load=False):
+ if not load:
+  with open("save.json", "w") as f:
+   allLoads=[v.width,v.height]
+   json.dump(allLoads, f)
+ else:
+  with open("save.json", "r") as f:
+   allLoads = json.load(f)
+   v.width,v.height= allLoads[0],allLoads[1]
+ print(v.width,v.height)
+
+#!main
+def mouseMove():
+ v.mouX,v.mouY=pygame.mouse.get_pos()
+
+if os.path.exists("save.json"):
+ saveLoad(True)
+v.screen1 = pygame.display.set_mode((v.width, v.height), pygame.RESIZABLE)
+
+while v.running: 
+ v.screen1.fill((10,10,30))
+ for event in pygame.event.get(): 
+  if event.type == pygame.QUIT: 
+   v.running = False
+  if event.type == pygame.VIDEORESIZE:
+   v.width, v.height = event.w, event.h
+  if event.type == pygame.MOUSEMOTION:
+   mouseMove()
+  if event.type == pygame.MOUSEBUTTONDOWN:
+   v.clicks[event.button]=True
+  if event.type == pygame.MOUSEBUTTONUP:
+   v.clicks[event.button] = False
+
+ for shape in v.shapes:
+  drawShape(shape[0],shape[1],shape[2])
+
+ pygame.display.flip()
+
+#!3dLandscape#######################
 import pygame
 import math
 import random
