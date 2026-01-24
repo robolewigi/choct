@@ -15,7 +15,7 @@ Exec=$INSTALL_DIR/choct %U
 Type=Application
 Terminal=false
 Categories=Utility;TextEditor;
-Icon=$INSTALL_DIR/_internal/icon.png
+Icon=$INSTALL_DIR/icon.png
 MimeType=text/plain;
 StartupWMClass=Tk
 EOL
