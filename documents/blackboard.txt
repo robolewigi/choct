@@ -1,3 +1,9 @@
-//todo
+//!todo
 -add saves where you can have many .sh scripts
 -have backups
+
+//!sh
+#!/bin/bash
+java main
+java classes main
+read
