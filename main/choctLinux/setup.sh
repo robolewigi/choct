@@ -23,7 +23,7 @@ update-desktop-database ~/.local/share/applications/
 else
  echo "failed"
 fi
-echo "setting alias and path in bashrc"
+echo "setting alias and path in (root)/bashrc"
 read -p "continue:[Y/n] " choice2
 choice2=${choice2:-Y}
 if [[ "$choice2" == "Y" || "$choice2" == "y" ]]; then
@@ -37,4 +37,4 @@ if [[ "$choice2" == "Y" || "$choice2" == "y" ]]; then
 else
     echo "failed"
 fi
-read -p ""
+read -p "end"
