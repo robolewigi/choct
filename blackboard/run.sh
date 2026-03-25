@@ -1,2 +1,2 @@
 #!/bin/bash
-gnome-terminal -- bash -c "javac main.java && java main; exec bash"
+konsole -e bash -c "g++ main.cpp -o main && ./main; bash"
