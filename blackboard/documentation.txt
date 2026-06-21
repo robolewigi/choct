@@ -1,10 +1,13 @@
 #!todo
-//no scroll
-//update moouse to stay at y while x is length varable
-//enter removes string places it last line if easy
-consolecommands function {find run hotkeys goto replace save open}
-//make selection from line to line
-//multiple selection y
+-without mouse position and resize
+-select text
+-text history
+-console history up down 
+-copy text
+-easier to do run commands
+-save console directory when quit
+-change hotkeys in program
+-shift+scoll resets scroll 
 
 #!v1 decemeber 2025
 import java.util.List;
