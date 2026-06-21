@@ -9,5 +9,9 @@ older version tested on windows
   <img src="images/icon.png" alt="Example 3" width="155"/>
 </p>
 
-### blackboard(wip)
+### blackboard
 text editor focused on a console view with programmable commands
+
+<p>
+  <img src="images/blackboard.png" alt="Example 4" width="99"/>
+</p>
