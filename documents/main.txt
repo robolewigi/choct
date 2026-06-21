@@ -4,6 +4,7 @@ for version 8
 -highlight only v.notebooks[0]
 -line 965 due to unhandled exception
 
+chalkboard= [14, 107, 55]
 #!RunCommand------------------------
 file name="main" bat/sh="run"
 Python:

@@ -1,4 +1,4 @@
-;!runCodes
+#!runCodes
 linux (gnome-terminal with virtual environment)
 #!/bin/bash
 PYTHON_SCRIPT="main.py"
@@ -45,7 +45,7 @@ gnome-terminal -- bash -c "go run .; bash"
 
 ;!fullCodes
 Index--------------------------------
-Python,window,timer,checkKey,paint, startGame+ command,3dLandscape,
+Python,window,timer,checkKey,paint, startGame+ command,3dLandscape, keyCodes
       Cpp,initialize,uiSamples,windowSize,events,controller,screenChange, timer, simulateClick, main
 import---------------------------------
 import pygame 
@@ -700,6 +700,20 @@ while v.running:
  pygame.display.flip()
 
 pygame.quit()
+
+#!keyCodes
+import sys, os, tty, termios
+fd = sys.stdin.fileno()
+old = termios.tcgetattr(fd)
+tty.setraw(fd)
+try:
+    while True:
+        data = os.read(fd, 32)
+        print(repr(data), flush=True)
+        if data == b'\x11': break  # ctrl+q to quit
+finally:
+    termios.tcsetattr(fd, termios.TCSADRAIN, old)
+
 cpp------------------------------
 imports------------------------------------------------------------
 #include <SDL2/SDL.h>
